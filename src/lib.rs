@@ -438,7 +438,7 @@ impl Config {
     ///
     /// This will run both the build system generator command as well as the
     /// command to build the library.
-    pub fn build_with_command(&mut self, executable: &OsStr, args: &[OsString]) -> PathBuf {
+    pub fn build_with_command(&mut self, executable: &OsStr, config_args: &[OsString]) -> PathBuf {
         let target = match self.target.clone() {
             Some(t) => t,
             None => {
@@ -519,8 +519,8 @@ impl Config {
         // fill the cmake command
 
         let mut cmd = Command::new(&executable);
-        if args.len() > 0 {
-            cmd.args(args.iter());
+        if config_args.len() > 0 {
+            cmd.args(config_args.iter());
         }
         
         if self.verbose_cmake {
@@ -799,9 +799,6 @@ impl Config {
         // And build!
         let target = self.cmake_target.clone().unwrap_or("install".to_string());
         let mut cmd = Command::new(&executable);
-        if args.len() > 0 {
-            cmd.args(args.iter());
-        }
         cmd.current_dir(&build);
 
         for &(ref k, ref v) in c_compiler.env().iter().chain(&self.env) {
