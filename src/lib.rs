@@ -426,6 +426,19 @@ impl Config {
     /// This will run both the build system generator command as well as the
     /// command to build the library.
     pub fn build(&mut self) -> PathBuf {
+        // Build up the first cmake command to build the build system.
+        let executable = self
+            .getenv_target_os("CMAKE")
+            .unwrap_or(OsString::from("cmake"));
+        self.build_with_command(&executable, &[])
+    }
+
+    /// Run this configuration, compiling the library with all the configured
+    /// options.
+    ///
+    /// This will run both the build system generator command as well as the
+    /// command to build the library.
+    pub fn build_with_command(&mut self, executable: &OsStr, args: &[OsString]) -> PathBuf {
         let target = match self.target.clone() {
             Some(t) => t,
             None => {
@@ -503,12 +516,13 @@ impl Config {
         cmake_prefix_path.extend(env::split_paths(&system_prefix).map(|s| s.to_owned()));
         let cmake_prefix_path = env::join_paths(&cmake_prefix_path).unwrap();
 
-        // Build up the first cmake command to build the build system.
-        let executable = self
-            .getenv_target_os("CMAKE")
-            .unwrap_or(OsString::from("cmake"));
-        let mut cmd = Command::new(&executable);
+        // fill the cmake command
 
+        let mut cmd = Command::new(&executable);
+        if args.len() > 0 {
+            cmd.args(args.iter());
+        }
+        
         if self.verbose_cmake {
             cmd.arg("-Wdev");
             cmd.arg("--debug-output");
@@ -785,6 +799,9 @@ impl Config {
         // And build!
         let target = self.cmake_target.clone().unwrap_or("install".to_string());
         let mut cmd = Command::new(&executable);
+        if args.len() > 0 {
+            cmd.args(args.iter());
+        }
         cmd.current_dir(&build);
 
         for &(ref k, ref v) in c_compiler.env().iter().chain(&self.env) {
