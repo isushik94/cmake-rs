@@ -430,7 +430,7 @@ impl Config {
         let executable = self
             .getenv_target_os("CMAKE")
             .unwrap_or(OsString::from("cmake"));
-        self.build_with_command(&executable, &[])
+        self.build_with_command(&executable, &[], &executable)
     }
 
     /// Run this configuration, compiling the library with all the configured
@@ -438,7 +438,11 @@ impl Config {
     ///
     /// This will run both the build system generator command as well as the
     /// command to build the library.
-    pub fn build_with_command(&mut self, executable: &OsStr, config_args: &[OsString]) -> PathBuf {
+    pub fn build_with_command(
+        &mut self,
+        executable: &OsStr,
+        config_args: &[OsString],
+        build_executable: &OsStr) -> PathBuf {
         let target = match self.target.clone() {
             Some(t) => t,
             None => {
@@ -798,7 +802,7 @@ impl Config {
 
         // And build!
         let target = self.cmake_target.clone().unwrap_or("install".to_string());
-        let mut cmd = Command::new(&executable);
+        let mut cmd = Command::new(&build_executable);
         cmd.current_dir(&build);
 
         for &(ref k, ref v) in c_compiler.env().iter().chain(&self.env) {
